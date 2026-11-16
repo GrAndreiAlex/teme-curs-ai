@@ -22,6 +22,8 @@ COLLECTION_NAME = "tema3_chunks"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120
 N_RESULTS = 3
+# Tema 3.1: distanta cosinus maxima acceptata. peste aceasta valoare, rezultatul e ignorat.
+MAX_DISTANCE = 0.5
 
 
 def creeaza_model():
@@ -125,9 +127,19 @@ def cauta(collection, model, source: str, intrebare: str) -> list[str]:
     rezultate = []
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
+    distances = results["distances"][0]
 
     for i in range(len(documents)):
         metadata = metadatas[i]
+        distance = distances[i]
+
+        # distanta cosinus: 0 = identic, cu cat e mai mare, cu atat e mai putin relevant.
+        # pastram doar rezultatele sub limita MAX_DISTANCE.
+        if distance > MAX_DISTANCE:
+            print(f"search> {metadata['source']} p{metadata['page']} distance={distance:.2f} (ignorat)")
+            continue
+
+        print(f"search> {metadata['source']} p{metadata['page']} distance={distance:.2f} (pastrat)")
         rezultate.append(
             f"{documents[i]}\nSource: {metadata['source']}, page {metadata['page']}"
         )
@@ -190,6 +202,12 @@ def main():
             continue
 
         rezultate = cauta(collection, model, fisier, intrebare)
+
+        # toate rezultatele au fost prea departe de intrebare -> nu mai intrebam agentul
+        if len(rezultate) == 0:
+            print(f"agent> Nu s-a gasit niciun rezultat relevant in '{fisier}' (distanta peste {MAX_DISTANCE}).")
+            continue
+
         print("agent>", raspunde(client, intrebare, rezultate))
 
 

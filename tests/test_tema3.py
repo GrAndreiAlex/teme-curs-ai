@@ -19,12 +19,20 @@ def db():
 
 def test_cautare_doar_in_sursa_ceruta(db):
     collection, model = db
-    rezultate = cauta(collection, model, "paragraphs.txt", "Who is the text about?")
+    rezultate = cauta(collection, model, "paragraphs.txt", "Marcus wrote a note before the meeting")
 
     assert len(rezultate) > 0
     for rezultat in rezultate:
         assert "Source: paragraphs.txt" in rezultat
         assert "StarMaker.pdf" not in rezultat
+
+
+def test_rezultate_prea_departe_sunt_ignorate(db):
+    # Tema 3.1: o intrebare fara legatura cu textul are distanta mare -> niciun rezultat
+    collection, model = db
+    rezultate = cauta(collection, model, "paragraphs.txt", "recipe for chocolate cake with strawberries")
+
+    assert rezultate == []
 
 
 def test_fisier_existent_si_inexistent(db):
